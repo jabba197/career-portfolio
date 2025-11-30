@@ -6,5 +6,5 @@ while true; do
     npx quartz build --serve
     exit_code=$?
     echo "Server exited with code $exit_code. Restarting in 1 second..."
-    sleep 1
+    sleep 0.1
 done
