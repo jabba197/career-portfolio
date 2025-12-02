@@ -175,24 +175,24 @@ Along the way, I solved a number of [[challenges|technical challenges]] — Duck
 
 **Present**
 
-Every good project needs an exit strategy. But sometimes the exit isn't a handover — it's an honest assessment.
+Every good project needs an exit strategy. But sometimes the exit isn't a handover — it's an honest assessment of your own position.
 
-### The Hard Truth
+### The Honest Truth
 
 I built a modern data stack. It works. It's faster, cleaner, more maintainable than what existed before.
 
-But QVC isn't in a position to adopt this kind of change. Not because the technology is wrong, but because organisational change requires the right leadership to champion it. And that person isn't me — I'm a senior analyst, not a data platform owner with executive backing.
+But driving platform-level change requires more than a working solution. It requires sustained advocacy, the right timing, and enough political capital to shepherd something through an organisation. As an individual contributor, I only have so much influence — and there are competing priorities, other ways of working, and market pressures that reasonably take precedence.
 
-### What I've Learned About Organisational Fit
+### What I've Learned About Change
 
-A technical solution is necessary but not sufficient. You also need:
+Technical solutions don't adopt themselves. Organisational change requires:
 
-- Leadership buy-in at the right level
-- Budget for ongoing maintenance
-- Cultural readiness to change workflows
-- Someone accountable for the platform long-term
+- The right timing and business context
+- Someone with the positional authority to champion it
+- Bandwidth from teams who would need to adopt new workflows
+- Alignment with broader strategic priorities
 
-QVC has none of these in place for a modern data stack. The legacy tools work "well enough" for most people. The pain I felt wasn't universal.
+None of this is a criticism — it's just reality. People have different learning preferences, different comfort levels with new tooling, and different views on what "good enough" looks like. That's normal. My job was to build something that worked; whether it gets adopted is a separate question that depends on factors beyond my control.
 
 ### What This Project Becomes
 
@@ -203,16 +203,18 @@ This portfolio. Proof that I can:
 - Build a working system from scratch
 - Document it for others to understand
 
-Regardless of where the MDS lands organisationally, it proves a transferable capability set: identifying infrastructure problems, architecting solutions, and documenting them clearly.
+Regardless of where the MDS lands organisationally, it demonstrates a transferable capability set. The learning compounds regardless of adoption.
 
 ---
 
 ## The Lesson
 
-The best infrastructure often comes from practitioners who identified problems and built solutions.
+The best infrastructure often comes from practitioners who felt a problem acutely and built a solution.
 
-But building something isn't the same as getting it adopted. Organisational change is a different skillset — one that requires positional power, not just technical skill.
+But building something isn't the same as getting it adopted. Influence and timing matter as much as technical quality — and those aren't always within your control.
 
-If you're in Era 2 right now — exploring options, trying things that don't work — keep going. The learning compounds, even if the organisation doesn't change.
+If you're in Era 2 right now — exploring options, trying things that don't work — keep going. The learning compounds, even if adoption doesn't follow immediately.
 
-And if you build something great that your organisation isn't ready to adopt? That's not failure. That's proof of capability — and the learning compounds regardless.
+And if you build something great that doesn't get picked up? That's not failure. That's proof of capability — and it travels with you.
+
+---
