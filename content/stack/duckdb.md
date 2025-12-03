@@ -29,7 +29,7 @@ The reality:
 - **60 million rows** of orderline data
 - Oracle join query: **1 hour** (when it didn't timeout)
 - Oracle maintenance window: midnight to 7am (connections closed)
-- Network transfer: **70 Mbps cap** (and that was optimistic)
+- Network transfer: **7 Mbps cap**
 
 ### The Local Compute Attempts
 
