@@ -35,6 +35,14 @@ A modern analytics platform that consolidates data from Oracle, Azure Blob Stora
 > [!success] Impact
 > **Pipeline runtime: 1 day → 20 minutes.** What used to crash my laptop now runs reliably every morning. 100+ dbt models serve 4 international markets (UK, DE, IT, JP), with ~50 stakeholders consuming Tableau reports built on this foundation.
 
+### How People Use It
+
+The platform isn't just infrastructure — it's how teams across QVC International get their data. Analysts build reports on top of it. Planners maintain their own classification prompts. Cross-market reporting that used to require weeks of manual alignment now runs on shared definitions and common models.
+
+I trained the first peer analyst on the stack (Git, dbt, Python), and he went on to build reporting independently. Fragile institutional knowledge — like bespoke deduplication logic that lived in one person's head — has been formalised into version-controlled, testable transformations.
+
+More on this in [[collaboration|Working With People]].
+
 ## Architecture at a Glance
 
 ```mermaid
@@ -109,6 +117,7 @@ How this platform evolved and what I learned. [[journey/index|Browse all →]]
 | Topic | Description |
 |-------|-------------|
 | [[case-studies\|Case Studies]] | Real problems solved (STAR format) |
+| [[collaboration\|Working With People]] | Stakeholders, training, and cross-market collaboration |
 | [[challenges\|Challenges]] | Technical obstacles overcome |
 | [[ai-accelerated-development\|AI-Accelerated Dev]] | How I used Claude Code |
 
