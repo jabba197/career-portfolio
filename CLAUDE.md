@@ -77,6 +77,26 @@ Components in `quartz/components/` follow this pattern:
 - ES Modules throughout (`"type": "module"`)
 - Preact for UI (JSX with `react-jsx` pragma)
 
+## Content Voice & Vocabulary
+
+This portfolio is public-facing, targeting analytics engineering roles at UK fintechs. Use language that mirrors how modern data teams talk about their work.
+
+**Prefer → Avoid:**
+- "data products" → "reports" or "dashboards"
+- "enabling self-serve analytics" → "building dashboards for people"
+- "enabling teams" → "doing analysis for teams"
+- "software engineering best practices applied to data" → "modern tools"
+- "version-controlled, tested, documented" → "clean" or "professional"
+- "founding analytics engineer" or "first mover" → "solo builder" or "lone wolf"
+
+**Framing principles:**
+- Lead with what stakeholders can do now, not what you built
+- Describe decisions and trade-offs, not just outcomes
+- DuckDB was constraint-driven (no cloud budget, no server access), not ideological — make this clear where relevant
+- No internal names. Use roles ("a peer analyst", "UK market leadership", "the BI team")
+- No internal politics or frustrations. Honest but professional
+- Blog tone, not business document
+
 ## PR Guidelines
 
 Follow Conventional Commits: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, `revert`

@@ -1,11 +1,11 @@
 ---
 title: "Tableau"
-description: "Connecting the data platform to business users"
+description: "Enabling self-serve analytics for the business"
 ---
 
 ## Why This Matters
 
-A data platform is only as valuable as its ability to deliver insights to decision-makers. [[duckdb|DuckDB]] and [[dbt|dbt]] handle storage and transformation, but analysts work in Tableau. This page covers how the MDS publishes data to Tableau Server automatically.
+A data platform is only as valuable as the data products it enables. [[duckdb|DuckDB]] and [[dbt|dbt]] handle storage and transformation, but the business self-serves through Tableau. This page covers how the MDS publishes data to Tableau Server automatically — enabling ~50 stakeholders to access fresh, trusted data without filing a request.
 
 > [!success] Impact
 > Fresh data in Tableau by 7:30 AM, every day, without manual intervention. Adding a new export takes 5 lines of config, not 50 lines of code.

@@ -5,7 +5,7 @@ description: "Architecture of the Modern Data Stack"
 
 ## Overview
 
-The Modern Data Stack (MDS) is a unified analytics platform that consolidates data from multiple source systems into a single queryable database, transforms it through version-controlled SQL, and serves it to business tools — all orchestrated automatically.
+The Modern Data Stack (MDS) is a data product that consolidates data from multiple source systems into a single queryable database, transforms it through version-controlled SQL, and enables self-serve analytics through Tableau — all orchestrated automatically.
 
 > [!success] What This Achieves
 > Automated daily pipelines across 4 markets. Fresh data lands in Tableau by 7:30 AM without manual intervention. 100+ dbt models, version-controlled and documented.
@@ -182,7 +182,7 @@ What happens automatically every day:
 - Brand tool refreshed
 - Database backed up
 - Tableau extracts updated
-By the time analysts arrive, fresh data is waiting.
+By the time the team arrives, fresh data products are ready to query.
 
 **3:15 PM** — Azure QI data lake ingestion
 - Orders for all 4 markets synced

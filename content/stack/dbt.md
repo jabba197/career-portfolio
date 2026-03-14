@@ -8,14 +8,14 @@ description: "SQL transformations with medallion architecture"
 dbt (data build tool) is the transformation layer of the MDS. It turns raw data into analytics-ready datasets through version-controlled SQL.
 
 > [!success] Impact
-> 100+ models across 4 markets, all version-controlled and testable. What was once scattered SQL files and tribal knowledge is now a documented, maintainable codebase.
+> 100+ models across 4 markets, all version-controlled and testable. What was once scattered SQL files and tribal knowledge is now a documented, maintainable codebase that any analyst can contribute to.
 
 **Why dbt matters:**
 - **Version control** - Every transformation is tracked in Git
 - **Modularity** - Models build on each other with explicit dependencies
 - **Testing** - Data quality checks run automatically
 - **Documentation** - Schema and descriptions live with the code
-- **Collaboration** - Multiple people can work on the same codebase
+- **Collaboration** - Software engineering best practices (branching, PRs, code review) applied to data
 
 Before dbt, transformations lived in scattered SQL files, undocumented Python scripts, and tribal knowledge. Now they're in one place, testable, and self-documenting.
 
@@ -167,7 +167,7 @@ models:
               max_value: 100000
 ```
 
-Tests run after models build. Failures alert us to data quality issues before they reach dashboards.
+Tests run after models build. Failures alert us to data quality issues before they reach downstream data products.
 
 **Common test patterns:**
 - `unique` - No duplicate keys

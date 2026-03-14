@@ -33,7 +33,7 @@ The full story is in [[journey/index|The Journey]].
 A modern analytics platform that consolidates data from Oracle, Azure Blob Storage, and SharePoint into a unified, version-controlled data warehouse powered by DuckDB and dbt.
 
 > [!success] Impact
-> **Pipeline runtime: 1 day → 20 minutes.** What used to crash my laptop now runs reliably every morning. 100+ dbt models serve 4 international markets (UK, DE, IT, JP), with ~50 stakeholders consuming Tableau reports built on this foundation.
+> **Pipeline runtime: 1 day → 20 minutes.** What used to crash my laptop now runs reliably every morning. 100+ dbt models serve 4 international markets (UK, DE, IT, JP), enabling ~50 stakeholders across the business to self-serve analytics through Tableau.
 
 ### How People Use It
 
@@ -101,12 +101,12 @@ Technologies powering the platform. [[stack/index|Browse all →]]
 |------------|---------|
 | [[sources\|Sources]] | Where the data comes from (Oracle, Azure, SharePoint) |
 | [[parquet-lake\|Parquet Lake]] | Extending the existing data lake for analyst access |
-| [[duckdb\|DuckDB]] | The database that made it all possible |
+| [[duckdb\|DuckDB]] | A constraint-driven database choice that enabled everything |
 | [[dbt\|dbt]] | Transformation layer (medallion architecture) |
 | [[dbt-duckdb\|dbt-duckdb]] | Technical patterns and SQL reference |
 | [[dagster\|Dagster]] | Orchestration and scheduling |
 | [[python-pipelines\|Python Pipelines]] | Ingestion from Azure, Oracle, SharePoint |
-| [[tableau\|Tableau]] | Serving data to the business |
+| [[tableau\|Tableau]] | Enabling self-serve analytics for the business |
 
 ---
 

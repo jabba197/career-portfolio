@@ -59,7 +59,7 @@ We tried OneDrive + Tableau's SharePoint connector. Uploads took hours. Tableau 
 
 The same query that took **1 hour in Oracle** ran in **10-16 minutes** in DuckDB.
 
-My colleague Kenan and I were genuinely shocked. We'd barely optimised anything. It was just... faster. 6x faster.
+A colleague and I were genuinely shocked. We'd barely optimised anything. It was just... faster. 6x faster.
 
 ### Why DuckDB Worked Where Others Didn't
 
@@ -71,7 +71,7 @@ My colleague Kenan and I were genuinely shocked. We'd barely optimised anything.
 | Read-only Oracle | Reads Parquet/CSV directly, creates local tables |
 | 7 Mbps network | Process locally after one-time data transfer |
 
-DuckDB wasn't the "best" database in some abstract sense. It was the **only database that worked within our constraints**.
+DuckDB wasn't the "best" database in some abstract sense. It was the **only database that worked within our constraints**. Given cloud access, I'd evaluate BigQuery or Snowflake — but DuckDB proved that right-sized tooling can outperform enterprise solutions for the right workload.
 
 ### The Technical Magic
 
@@ -118,10 +118,10 @@ DuckDB alone was 6x faster. But it enabled other improvements that compounded:
 ### Stage 2: dbt on DuckDB
 - Version-controlled transformations
 - Modular, testable SQL
-- Kenan and I could collaborate instead of duplicating work
+- Analysts could collaborate on a shared codebase instead of duplicating work
 
 ### Stage 3: Hyper API Integration
-- Kenan discovered we could create Tableau extracts programmatically
+- We discovered we could create Tableau extracts programmatically
 - Bypassed the CSV parsing bottleneck entirely
 
 ### Stage 4: Automated Pipelines

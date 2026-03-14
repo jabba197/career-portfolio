@@ -155,10 +155,10 @@ See [[case-studies]] for real examples of problems solved with this stack.
 
 ### Progress
 
-- Built 100+ dbt models across 4 markets (UK, DE, IT, JP)
-- Created 50+ Dagster assets for orchestration
-- Automated daily refresh replacing manual runs
-- Integrated with Tableau Server for business delivery
+- 100+ dbt models serving 4 international markets
+- 50+ Dagster assets orchestrating the full pipeline
+- Automated daily refresh enabling self-serve analytics for ~50 stakeholders
+- Data products published to Tableau Server before the business day starts
 
 ### What Changed
 
@@ -210,12 +210,12 @@ None of this is a criticism — it's just reality. People have different learnin
 
 This portfolio. Proof that I can:
 
-- Identify infrastructure problems
-- Research and evaluate solutions
-- Build a working system from scratch
-- Document it for others to understand
+- Identify infrastructure gaps and design solutions around real constraints
+- Build production data products from scratch — version-controlled, tested, documented
+- Enable self-serve analytics for cross-functional teams
+- Apply software engineering best practices to data work
 
-Regardless of where the MDS lands organisationally, it demonstrates a transferable capability set. The learning compounds regardless of adoption.
+The learning compounds regardless of adoption — and it travels with you.
 
 ---
 
