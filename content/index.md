@@ -5,24 +5,26 @@ description: "How I built a modern analytics platform that cut pipeline runtime 
 
 ## Overview
 
-I'm Vishal Kerai, a Senior Analyst at QVC with a background in analytics and data engineering. This portfolio documents a modern data stack I designed and built from scratch — and the thinking behind it.
+I'm Vishal Kerai. I joined QVC in January 2024 as a Senior Commercial Analyst — but a natural affinity for solving problems with code led me down a different path. I became QVC International's first analytics engineer, designing and building a modern data stack from scratch. This portfolio documents what I built and the thinking behind it.
 
 ### The Environment I Inherited
 
-When I joined QVC in January 2024, the analytics infrastructure was a product of its era. The flagship reports — the ones the business relied on daily — were Excel workbooks powered by VBA macros and, in some cases, ActiveX controls for interactivity. ActiveX was sunsetted years ago and is now a security risk; those reports are actively being replaced.
+QVC is a company rich in data but constrained by legacy infrastructure. When I arrived, the analytics platform had been built incrementally over years — before modern tooling was accessible to analysts.
+
+My first project, a customer segmentation dashboard, exposed every weakness. Joining 60 million orderline rows with product and member data took over an hour in Oracle. Transfers were capped at 7 Mbps over VPN. CSV files were scattered across network drives with no unified source of truth. New business insights could take days or weeks to generate.
 
 The broader stack looked like this:
 
-- **Oracle** — the transactional source database
-- **Hyperion** — an OLAP layer for scheduling extracts to network drives. Support ended years ago, with stability limitations
-- **Excel + Power Query** — the analytics platform. Analysts connected to Oracle via ODBC, linked to Hyperion extracts and business spreadsheets, transformed in Power Query, and built pivots
-- **16GB laptops** — where it all ran, often from home over slow VPN connections
+- **Oracle** — the transactional source database, not designed for analytical workloads
+- **Hyperion** — a deprecated OLAP layer scheduling extracts to network drives
+- **Excel + Power Query** — the analytics platform. Analysts connected to Oracle via ODBC, transformed in Power Query, and built pivots. Business logic lived inside spreadsheets
+- **16GB laptops** — where it all ran, often from home over 7 Mbps VPN connections
 
-It worked. People delivered insights, built dashboards, ran the business. But there were constraints around speed, reliability, and maintainability.
+It worked. People delivered insights, built dashboards, ran the business. But no one was bridging the gap between analyst work and modern engineering practices — multiple analysts were creating different versions of similar reports, nothing was version-controlled, and there was no path to scale.
 
 ### Why I Built Something Different
 
-When I hit the limitations — Excel row limits, day-long rebuilds, no version control — I reached for what I knew: Python and SQL. Six months of exploration led me to dbt, DuckDB, and a local-first approach that worked within existing infrastructure rather than waiting for cloud approvals.
+When I hit the limitations — Excel row limits, day-long rebuilds, queries that crashed my laptop — I reached for what I knew: Python and SQL. Six months of exploration led me to dbt, DuckDB, and a local-first approach that worked within existing infrastructure rather than waiting for cloud approvals.
 
 The full story is in [[journey/index|The Journey]].
 
