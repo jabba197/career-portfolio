@@ -41,7 +41,7 @@ The platform isn't just infrastructure — it's how teams across QVC Internation
 
 I trained the first peer analyst on the stack (Git, dbt, Python), and he went on to build reporting independently. Fragile institutional knowledge — like bespoke deduplication logic that lived in one person's head — has been formalised into version-controlled, testable transformations.
 
-More on this in [[collaboration|Working With People]].
+More on this in [[journey/index#Expanding the Scope|The Journey]].
 
 ## Architecture at a Glance
 
@@ -117,7 +117,6 @@ How this platform evolved and what I learned. [[journey/index|Browse all →]]
 | Topic | Description |
 |-------|-------------|
 | [[case-studies\|Case Studies]] | Real problems solved (STAR format) |
-| [[collaboration\|Working With People]] | Stakeholders, training, and cross-market collaboration |
 | [[challenges\|Challenges]] | Technical obstacles overcome |
 | [[ai-accelerated-development\|AI-Accelerated Dev]] | How I used Claude Code |
 

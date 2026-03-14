@@ -169,6 +169,18 @@ After: One repo, version controlled, self-documenting, onboardable.
 
 Along the way, I solved a number of [[challenges|technical challenges]] — DuckDB concurrency, European CSV dialects, safe file operations.
 
+### Expanding the Scope
+
+I built the MDS mostly to serve myself — to do the work I needed to do without fighting the tooling. But as it matured, I started to see room to bring others in.
+
+A peer analyst got curious. Instead of giving him a demo, I paired with him on real work — Git, dbt, Python. He went on to build a customer dashboard and a product classification report independently, using the MDS as his foundation.
+
+What I didn't expect was how much *I* got out of it. Every person who onboarded brought business logic that had been locked away in their own siloed way of working — deduplication rules living in text files, metric definitions embedded in Excel, domain knowledge that had never been written down as code. Each new addition to the MDS felt like a genuine win. They learned more efficient ways of working. I got their institutional knowledge formalised into the shared codebase.
+
+The core model feeding all UK commercial reports needed to be ready by 8:30 AM. That constraint reshaped my orchestration design. A colleague's bespoke SQL for customer matching became a version-controlled dbt model anyone could maintain. New reporting requests went from weeks to days because the infrastructure already existed.
+
+Technical people often assume the work speaks for itself. It doesn't. I learned that the hard way — pitching the architecture got polite nods, but showing live dashboards and automated pipelines got people interested. The platform only became valuable when other people could build on it without me.
+
 ---
 
 ## Era 4: The Realisation
