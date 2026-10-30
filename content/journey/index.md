@@ -149,13 +149,13 @@ This is also when I discovered [[ai-accelerated-development|Claude Code]]. The c
 - **DuckDB** for fast analytical queries (no server needed)
 - **Python** for ingestion pipelines
 - **Git** for version control
-- **Dagster** for orchestration
+- **Dagster** for orchestration (retired in May 2026 - see Era 5)
 
 See [[case-studies]] for real examples of problems solved with this stack.
 
 ### Progress
 
-- 100+ dbt models serving 4 international markets
+- 100+ dbt models serving 4 international markets (about 500 by late 2026)
 - 50+ Dagster assets orchestrating the full pipeline
 - Automated daily refresh enabling self-serve analytics for ~50 stakeholders
 - Data products published to Tableau Server before the business day starts
@@ -185,7 +185,7 @@ Technical people often assume the work speaks for itself. It doesn't. I learned 
 
 ## Era 4: The Realisation
 
-**Present**
+**Early 2026**
 
 Every good project needs an exit strategy. But sometimes the exit isn't a handover — it's an honest assessment of your own position.
 
@@ -216,6 +216,47 @@ This portfolio. Proof that I can:
 - Apply software engineering best practices to data work
 
 The learning compounds regardless of adoption — and it travels with you.
+
+---
+
+## Era 5: The Mandate
+
+**Mid 2026 – Present**
+
+Era 4 ended with "whether it gets adopted is a separate question." In 2026 that question got an answer.
+
+### From Side Project to Programme
+
+The platform now has a sponsor. A director asked for a mission statement, a roadmap and a list of asks to take to the analytics steering group. A cross-team working group meets every week - analysts, our manager and the data engineering team - and we wrote a paper on where the platform should live long-term, with the routes, pros and cons laid out.
+
+The conversation changed. It is no longer "should this exist?" It is "where should it run, and who owns which part?"
+
+### Others Bring Their Data
+
+The clearest sign of adoption is that people now bring their work to the platform instead of keeping it in their own files:
+
+- A marketing analyst asked for their profitability and lifetime-value tables to be built into it, so their successor can carry them on.
+- Call-centre data is being sourced into it so customer groups can be joined to how people contact us.
+- A colleague's long-running reporting process is moving onto it, so failures get caught automatically.
+
+### Others Build on It
+
+- A peer analyst produces reports end to end with an AI agent working inside the repo.
+- Stakeholders now ask whether a slide "came from the MDS" - it has become a mark of a trusted number.
+- Managers see its fixed, version-controlled business rules as what makes AI analysis safe to use.
+
+### What Changed in the Stack
+
+- **Orchestration simplified.** Dagster ran out of memory on a single desktop, so I retired it in May 2026 for plain Python jobs on the Windows scheduler. The fanciest tool is not always the right one.
+- **Bigger, but still local.** About 500 dbt models now, 125 of them published reporting tables, still on one desktop.
+- **Quality as code.** Data tests guard grain, freshness and currency conversion, so a wrong number fails a test before it reaches a report.
+- **AI as a teammate.** AI agents write models, run checks and draft commentary, under the same rules and tests as a person.
+
+### What I Learned
+
+- **Adoption follows trust, not pitches.** It came when people relied on its numbers every week, not when I explained the architecture.
+- **Sponsorship changes the question.** With a sponsor, the debate moves from "if" to "how" - and "how" needs engineers, finance and analysts in one room.
+- **Write it down.** A platform others can adopt needs its rules, definitions and decisions written where anyone can find them.
 
 ---
 
