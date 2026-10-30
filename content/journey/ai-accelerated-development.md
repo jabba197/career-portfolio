@@ -1,6 +1,8 @@
 ---
 title: "AI-Accelerated Development"
 description: "How I used Claude Code to build faster and learn deeper"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## The Honest Truth
@@ -21,11 +23,11 @@ When exploring a new approach, I could iterate through ideas in minutes instead 
 
 > "I have 10 Tableau exports that all follow the same pattern. Each is a separate [[dagster|Dagster]] asset with ~50 lines of code. I want to make this configuration-driven. Show me a factory pattern approach."
 
-AI generated an initial design. I refined it, asked follow-up questions about edge cases, and arrived at a working solution in an afternoon instead of days. See [[case-studies#Case Study 2 Configuration-Driven Tableau Exports|the case study]] for the full story.
+AI generated an initial design. I refined it, asked follow-up questions about edge cases, and arrived at a working solution in an afternoon instead of days. See [[case-studies#Case Study 2 Flag-Based Tableau Exports|the case study]] for the full story.
 
 ### 2. Learning New Technologies
 
-I hadn't used [[dagster|Dagster]] before this project. AI served as an always-available tutor.
+I hadn't used [[dagster|Dagster]] before this project (I later retired it, in May 2026). AI served as an always-available tutor.
 
 **Example:** Understanding Dagster's asset dependencies
 
@@ -70,7 +72,7 @@ When I start a coding session, the AI already knows:
 - This is a Windows environment
 - [[duckdb|DuckDB]] queries need specific syntax (see [[dbt-duckdb|dbt on DuckDB]])
 - Customer IDs overlap between markets (see [[challenges#Challenge 2 Cross-Market Customer Identity|identity challenges]])
-- We don't use external [[dbt|dbt]] packages
+- Model SQL uses DuckDB's native functions; [[dbt|dbt]] packages are for tests only
 
 I don't have to explain context repeatedly. I can just say "add a new dbt staging model for the UK events table" and get something useful.
 
@@ -125,6 +127,40 @@ if not source_path.exists():
 
 AI can read these and suggest fixes. Vague errors waste everyone's time.
 
+## 2026: AI Agents Working in the Repo
+
+The way I use AI changed in 2026. It is no longer only a tutor and a pair programmer. AI agents now do real work inside the repo: they write and change models, run checks, investigate failures and draft commentary. A peer analyst produces reports end to end with an agent working in the same codebase.
+
+That only works because agents follow the same rules and tests as a person.
+
+### Rules Written Down
+
+- **`CLAUDE.md` is a short contract**, not a manual. It holds the operating rules every session needs: how to run dbt, how to size a query for this machine, the data rules that must never be broken.
+- **Deep knowledge lives in a knowledge bundle**: over 100 pages of design notes, methods and past incidents, linked from the contract. When a rule and a deep page disagree, the rule wins and the page gets fixed.
+- **Procedures live in skills**: packaged instructions for one kind of task, such as managing the schedule, sending notifications or working in Synapse. Each topic has one home, so knowledge is not copied into several places to drift.
+
+### Guardrails Learned the Hard Way
+
+- **Agents do not commit or push unless the brief names the exact files.** This rule came after an agent swept unreviewed work in progress onto the shared main branch. Commits now stage explicit paths only.
+- **On a database lock, wait; never kill.** A "stuck" process may be a two-hour build. Agents read through the read-only query broker, which waits through locks and says who holds them.
+- **Size every query for the machine.** The rules on memory-heavy queries apply to agents too, and heavy analysis runs as a small number of narrow, read-only background agents.
+- **Keep tool output small.** One oversized result once broke a whole session, so outputs are capped and large results go to files.
+
+### Tests as the Safety Net
+
+- **Data tests** guard grain, ranges, freshness and currency conversion, so a wrong number fails a test before it reaches a report, whoever wrote the model.
+- **A rule check** fails when a model re-types a business rule by hand instead of using its one shared definition. A rule that had been copied into about fifteen places had drifted between the copies.
+- **The run-history database records who ran each build**, a person or an agent, so I can see what agents built and how long it took.
+
+### AI in Operations
+
+When a scheduled phase fails, an AI step reads its log, writes a post-mortem and files a triage note. It sorts the failure into one of three kinds: something it can fix, something that needs a deeper read-only investigation, or something only a human can resolve (credentials, infrastructure, upstream data). A fix is limited to the files named in the diagnosis and is never committed: it can't run dbt, touch secrets or delete files. I review every change.
+
+### What I Learned
+
+- **An agent is only as safe as the rules around it.** The value came from writing the rules down and backing them with tests, not from the model.
+- **Every incident becomes a rule.** Most of the guardrails above exist because something went wrong once.
+
 ## What AI Can't Do (Yet)
 
 ### Business Context
@@ -132,7 +168,7 @@ AI can read these and suggest fixes. Vague errors waste everyone's time.
 AI doesn't know that:
 - German markets use semicolons in CSVs (cultural convention)
 - Customer IDs overlap between markets (business decision from years ago)
-- The commercial team needs data by 7:30 AM (SLA)
+- The commercial team needs its core data before the working day starts (an SLA)
 
 I had to provide this context explicitly.
 
@@ -193,7 +229,7 @@ The goal isn't to produce code faster. It's to become a better engineer faster.
 ## Related
 
 - [[journey/index|The Journey]] — The full story from frustrated analyst to platform builder
-- [[dagster|Dagster]] — The orchestration layer AI helped me learn
+- [[dagster|Dagster]] — The orchestration layer AI helped me learn, and why I retired it
 - [[dbt|dbt]] — Transformation architecture developed iteratively with AI
 - [[challenges|Challenges]] — Technical problems where AI accelerated debugging
 - [[case-studies|Case Studies]] — Real outcomes from AI-assisted development

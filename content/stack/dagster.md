@@ -1,6 +1,8 @@
 ---
 title: "Dagster"
 description: "Asset-based data pipelines and scheduling - and why I retired it in May 2026"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 > [!note] Retired in May 2026

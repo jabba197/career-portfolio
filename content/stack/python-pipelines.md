@@ -1,6 +1,8 @@
 ---
 title: "Python Pipelines"
 description: "Ingestion from Azure, Oracle, and business sources"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Overview
@@ -16,12 +18,12 @@ These pipelines were built with significant AI assistance. Claude helped design 
 
 ### Azure to Parquet
 
-**Location:** `dlt/pipelines/azure_to_network/azure_to_parquet.py`
+**Location:** `data_ingestion/pipelines/azure_to_network/azure_to_parquet.py`
 
 The workhorse pipeline. Syncs CSV files from Azure Blob Storage to local Parquet files.
 
 ```bash
-# Called via Dagster asset
+# Called from the daily ingest job (from a Dagster asset until May 2026)
 run_azure_sync(market="UK", folder_name="ingest_orders", days_back=30)
 ```
 
@@ -30,6 +32,7 @@ run_azure_sync(market="UK", folder_name="ingest_orders", days_back=30)
 - Handles European CSV dialects (semicolon delimiters for DE/IT)
 - Tracks state to avoid reprocessing unchanged files
 - Converts to Parquet using [[duckdb|DuckDB]]
+- Signs in with the user's corporate identity (single sign-on) rather than a shared access token (2026)
 
 **Handles two patterns:**
 ```
@@ -180,13 +183,17 @@ See [[challenges#Challenge 5 Safe File Operations|Safe File Operations Challenge
 
 ## Orchestration
 
-All pipelines are wrapped as [[dagster|Dagster]] assets. Dagster handles:
-- Scheduling (when to run)
-- Dependencies (what must complete first)
-- Retries (exponential backoff on failure)
-- Logging (every run recorded)
+**Since May 2026** the pipelines run inside plain Python jobs on the Windows scheduler. Each job is a list of numbered phases; a shared runner gives every phase:
+- Retries (three attempts with a back-off; a deterministic test failure is not retried, because it would only fail again)
+- Logging (a dated log per run)
+- Resume (`--start-from N` restarts at the phase that broke)
+- Alerts (a phone notification, and an AI-written triage note on failure)
 
-Example asset wrapping a pipeline:
+The schedule itself lives in one manifest file in version control, not in the scheduler's GUI. Where two sources do not depend on each other, the job runs them side by side: the morning job extracts from Oracle and from Synapse in two parallel lanes, and stays within an agreed limit on Oracle sessions.
+
+Writes follow the local-first rule: each file is written to local disk and then mirrored to the network share on a best-effort basis (see [[parquet-lake#Local-First Storage (2026)|Local-First Storage]]).
+
+**2025–May 2026:** all pipelines were wrapped as [[dagster|Dagster]] assets, and Dagster handled scheduling, dependencies, retries and logging. Example asset wrapping a pipeline:
 
 ```python
 @asset(group_name="azure_ingestion_orders")
@@ -198,7 +205,7 @@ def uk_orders_azure(context: AssetExecutionContext):
 
 ## Related
 
-- [[dagster#Ingestion Assets|Dagster Ingestion Assets]] — How pipelines are orchestrated
+- [[dagster#Ingestion Assets|Dagster Ingestion Assets]] — How pipelines were orchestrated until May 2026
 - [[duckdb|DuckDB]] — Used for CSV→Parquet conversion and data merging
 - [[tableau|Tableau]] — Destination for `duckdb_to_tableau_server.py`
 - [[challenges|Challenges]] — Problems solved in these pipelines

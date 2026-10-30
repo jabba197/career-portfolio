@@ -1,14 +1,16 @@
 ---
 title: "Tableau"
 description: "Enabling self-serve analytics for the business"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Why This Matters
 
-A data platform is only as valuable as the data products it enables. [[duckdb|DuckDB]] and [[dbt|dbt]] handle storage and transformation, but the business self-serves through Tableau. This page covers how the MDS publishes data to Tableau Server automatically — enabling ~50 stakeholders to access fresh, trusted data without filing a request.
+A data platform is only as valuable as the data products it enables. [[duckdb|DuckDB]] and [[dbt|dbt]] handle storage and transformation, but the business self-serves through Tableau. This page covers how the MDS publishes data to Tableau Server automatically — so stakeholders across the business get fresh, trusted data without filing a request.
 
 > [!success] Impact
-> Fresh data in Tableau by 7:30 AM, every day, without manual intervention. Adding a new export takes 5 lines of config, not 50 lines of code.
+> Fresh data in Tableau every morning, without manual intervention. Adding a new export takes 5 lines of config, not 50 lines of code. Scorecards only publish after their checks pass.
 
 ## The Challenge
 
@@ -24,7 +26,7 @@ Building transformation pipelines is one thing. Getting that data into the hands
 
 ### The Problem
 
-Each Tableau export started as a separate [[dagster|Dagster]] asset with ~50 lines of boilerplate:
+In 2025, each Tableau export started as a separate [[dagster|Dagster]] asset with ~50 lines of boilerplate:
 
 ```python
 @asset(deps=["run_int_orderline_attribute"])
@@ -57,7 +59,7 @@ The script (`duckdb_to_tableau_server.py`) handles all complexity:
 5. Publishes the extract
 6. Creates local backup copies
 
-Dagster assets become simple wrappers:
+Dagster assets became simple wrappers (2025):
 
 ```python
 @asset(
@@ -82,6 +84,7 @@ def daily_sales_tableau_export(context):
 |---------------|---------|
 | **Simplicity** | One script, one responsibility |
 | **Testability** | Run from command line without Dagster |
+| **Portability** | When Dagster was retired in May 2026, the script moved to the new scheduled jobs unchanged |
 | **Flexibility** | Any table combination, any extract name |
 | **Debuggability** | Errors appear in stdout, easy to reproduce |
 
@@ -89,8 +92,8 @@ def daily_sales_tableau_export(context):
 
 ```mermaid
 flowchart LR
-    subgraph Dagster
-        A[dbt Model Asset] --> B[Tableau Export Asset]
+    subgraph Job[Scheduled Python job]
+        A[dbt build phase] --> B[Tableau export phase]
     end
 
     subgraph Script
@@ -106,6 +109,8 @@ flowchart LR
 ```
 
 ## Active Exports
+
+*The exports as they stood in 2025. There are many more today.*
 
 ### Commercial Team
 
@@ -129,14 +134,27 @@ flowchart LR
 
 ## Scheduling Strategy
 
-Exports are timed to ensure data is ready when analysts arrive:
+Exports are timed to ensure data is ready when analysts arrive.
+
+**Since May 2026** they run as phases inside the scheduled Python jobs. The morning job builds the core models first, then builds each extract locally and publishes it. The largest extract, tens of millions of rows, takes well over an hour to upload over the office link, so it now uploads in the background while later models keep building. Weekly and monthly scorecards publish from their own jobs.
+
+**In 2025**, under Dagster:
 
 | Schedule | Time | Rationale |
 |----------|------|-----------|
 | Morning refresh | 7:15 AM | Data ready before commercial team arrives |
 | Daily sales flow | 3:45 PM | After Azure data lands (~3:15 PM), ready for next morning |
 
-See [[dagster#Scheduling|Dagster scheduling]] for the full schedule configuration.
+See [[dagster#Scheduling|Dagster scheduling]] for that configuration.
+
+## Publishing Safely (2026)
+
+As more reports came to depend on the platform, "the job ran" stopped being good enough. Four changes:
+
+- **Resumable uploads.** The Tableau client library sends a large file in chunks but does not retry a failed chunk, so one dropped connection restarted a multi-gigabyte upload from zero. I replaced the upload step with one that retries the failed chunk and carries on.
+- **A publish gate for scorecards.** A build that exits cleanly is not proof the numbers are right: a warning-level test, a test skipped by a selector or a partial build can all slip through. Before a scorecard publishes, the gate checks that the named tie-out tests actually ran and passed, and that the table holds the period it should. If not, nothing publishes.
+- **A stale-datasource check.** The daily deliverables gate also flags a published datasource whose table was rebuilt after its last publish, which means the business is looking at old numbers.
+- **The model says where it goes.** Each published model's header names its Tableau destination. That header is the record, and an ad-hoc publish is a separate step I confirm, never a side effect of a build.
 
 ## Lessons Learned
 
@@ -144,16 +162,16 @@ See [[dagster#Scheduling|Dagster scheduling]] for the full schedule configuratio
 
 - **Flag-based script is testable** — Can run `python script.py --tables X --name Y` directly without spinning up Dagster
 - **Single source of truth** — All publishing logic in one script, no drift between assets
-- **Explicit dependencies** — Dagster `deps` parameter ensures dbt models complete before export attempts
+- **Explicit dependencies** — Dagster's `deps` parameter (2025), and now the phase order in each job, ensures dbt models complete before export attempts
 
 ### What We'd Do Differently
 
-- **Earlier investment in notifications** — Added ntfy alerts late; would build in from the start
+- **Earlier investment in notifications** — Added ntfy alerts late; would build in from the start. By 2026, failures go to phone and Teams, and a daily check flags reports that should have landed and did not
 - **Hyper file versioning** — Currently overwrites; could keep dated backups for rollback
 
 ## Related
 
-- [[dagster#Tableau Exports|Dagster Tableau Exports]] — How exports are orchestrated
+- [[dagster#Tableau Exports|Dagster Tableau Exports]] — How exports were orchestrated until May 2026
 - [[duckdb|DuckDB]] — Source database for all exports
 - [[dbt|dbt]] — Transformation layer producing the tables we export
 - [[case-studies#Case Study 2 Flag-Based Tableau Exports|Flag-Based Exports Case Study]] — The full story of this pattern

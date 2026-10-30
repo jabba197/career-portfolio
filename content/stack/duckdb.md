@@ -1,6 +1,8 @@
 ---
 title: "DuckDB"
 description: "Why a local-first database was the only option that worked"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## The Constraint That Shaped Everything
@@ -125,7 +127,7 @@ DuckDB alone was 6x faster. But it enabled other improvements that compounded:
 - Bypassed the CSV parsing bottleneck entirely
 
 ### Stage 4: Automated Pipelines
-- Dagster orchestrating everything
+- Dagster orchestrating everything (2025; replaced by plain Python jobs on the Windows scheduler in May 2026)
 - End-to-end refresh: **4+ hours → 30 minutes**
 
 None of this would have been possible without DuckDB as the foundation.
@@ -140,7 +142,31 @@ The MDS wouldn't exist without DuckDB. It was the foundation that made everythin
 | End-to-end refresh | 4+ hours | 30 min |
 | Local development | Crashes, fragile | Fast, reliable |
 | Collaboration | Impossible | dbt + Git |
-| Automation | Manual | Dagster pipelines |
+| Automation | Manual | Scheduled pipelines (Dagster in 2025, plain Python jobs since May 2026) |
+
+## DuckDB in 2026
+
+Two years on, DuckDB is still the foundation. What changed is the scale and the discipline around it.
+
+### Bigger Machine, Same Failure Mode
+
+The platform started on a 16 GB laptop, moved to a 32 GB desktop, and now runs on a 64 GB desktop (Intel Core Ultra 5, 14 cores). More memory did not remove the risk. A greedy query plan can still use up the RAM and take the whole machine down: in mid-2026 the host shut down unexpectedly five times, with no crash dump, which points to resource exhaustion rather than a driver fault.
+
+So I wrote rules for how queries are sized on this box:
+
+- **Leave headroom.** dbt runs with a 45 GB memory limit. DuckDB's limit only covers its own buffer manager, so the process uses more than that; the rest keeps Windows alive.
+- **Do not set the limit low either.** Too low a limit forces heavy disk spill and runs that never finish.
+- **Aggregate in stages.** No `COUNT(DISTINCT)` or `median()` in a GROUP BY over 100M+ rows. A distinct aggregate keeps a hash set per group. I aggregate line to order to customer with plain sums, so a count of the previous stage is the distinct count.
+- **Query tables, not views.** A staging view re-reads every Parquet file on each query. Analysis goes to the persisted refined tables.
+- **Check free memory first** before a large scan or build, and run one heavy job at a time.
+
+### A Read-Only Query Broker
+
+DuckDB allows one writer, and a scheduled build can hold the lock for an hour. An ad-hoc query that hits that lock used to hang or fail. I built a small command-line broker for reads. It queues, polls through write locks and names the process holding the lock, times out and cancels cleanly, and logs every query with its memory use. Writes stay with dbt. Both people and AI agents use it, which matters: an agent that kills a "stuck" process can destroy a two-hour build.
+
+### Upgrading to DuckDB 2.0
+
+On 23 October 2026 I moved the engine from 1.5 to 2.0. The upgrade changed no model SQL. The database file stays on the older storage format, so an older engine can still open it, and a cutover script both installs and rolls back. The real work was TLS: 2.0 does not verify server certificates by default, and the corporate proxy re-signs traffic. I turned verification on and gave DuckDB a certificate bundle that includes the proxy's root, rather than leaving it off.
 
 ## The Lesson
 

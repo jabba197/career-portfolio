@@ -1,6 +1,8 @@
 ---
 title: "dbt-duckdb"
 description: "Technical reference for running dbt with DuckDB"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Overview
@@ -9,13 +11,19 @@ This is the technical reference for how [[dbt]] and [[duckdb|DuckDB]] work toget
 
 For the story of why we chose DuckDB, see [[duckdb]]. For dbt architecture and model organisation, see [[dbt]].
 
-## Why No External Packages
+## Why No External Packages (until August 2026)
 
 Corporate network restrictions block `pip install` for external packages. SSL certificate errors and proxy settings add complexity to package management. Working within these constraints, we adopted a "no external packages" policy.
 
-This means no `dbt-utils`, no `dbt-expectations`, no community packages.
+This meant no `dbt-utils`, no `dbt-expectations`, no community packages.
 
-**The upside**: DuckDB's native SQL is powerful enough that we don't miss them. The resulting code is simpler and has zero external dependencies.
+**The upside**: DuckDB's native SQL is powerful enough that we don't miss them for SQL generation. The resulting code is simpler and has fewer external dependencies.
+
+### What Changed in 2026
+
+Plain `dbt deps` still cannot reach the package hub from this machine: the proxy re-signs TLS traffic, and newer Python versions apply stricter certificate checks. In August 2026 I wrote a small installer that handles both without turning certificate verification off, and installed `dbt_expectations` and `dbt_utils`. Exact versions are pinned in a committed lock file, and everyday `dbt run` and `dbt test` need no network.
+
+The split is deliberate: **packages for tests, DuckDB for SQL.** The native alternatives below are still the house style for model code.
 
 ## DuckDB Alternatives to dbt_utils
 
@@ -84,7 +92,7 @@ sources:
     schema: main_qi_data_lake
     tables:
       - name: uk_ingest_orders
-        identifier: "read_parquet('{{ env_var('DBT_SOURCE_PATH') }}/qi_data_lake/UK/ingest_orders/*/*/*.parquet')"
+        identifier: "read_parquet('{{ env_var('DBT_SOURCE_PATH') }}/qi_data_lake/UK/ingest_orders/*/*/*.parquet', hive_partitioning=true)"
 ```
 
 **Key options:**
@@ -105,10 +113,11 @@ SELECT * FROM read_parquet(
 | Layer | Materialisation | Why |
 |-------|-----------------|-----|
 | Staging | View | No storage cost, always fresh |
-| Intermediate | View | Recomputes from source each time |
+| Refined staging (`stg_ref_*`) | Table | Curated columns, cheap to query |
+| Intermediate | View (default) | Recomputes from source each time; heavy models are set to table |
 | Marts | Table | Persisted for fast dashboard queries |
 
-Views mean staging and intermediate layers don't consume disk space. Only the final marts are stored.
+Views mean most staging and intermediate models don't consume disk space. The catch: a view over Parquet re-reads every file on each query. As the platform grew, I added persisted refined tables for the busiest sources, and analysis queries go there instead of to the views.
 
 ```sql
 -- Staging model
@@ -183,15 +192,17 @@ GROUP BY member_no
 models:
   - name: fct_orders
     tests:
-      - unique:
-          column_name: "market || '_' || member_no || '_' || order_no"
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [market, member_no, order_no]
 ```
 
-## Concurrency with Dagster
+(Before the test packages arrived, I used `unique` on a concatenated string, `market || '_' || member_no || '_' || order_no`. The combination test is clearer and cannot be fooled by a separator inside a value.)
 
-DuckDB is single-process - only one connection can write at a time. When Dagster runs multiple dbt jobs concurrently, they compete for locks.
+## Concurrency (One Writer at a Time)
 
-**Solution**: Tag-based concurrency limits:
+DuckDB is single-process - only one connection can write at a time. When several jobs build dbt models at once, they compete for the lock.
+
+**2025: tag-based limits in Dagster.**
 
 ```yaml
 # dagster.yaml
@@ -202,7 +213,7 @@ run_coordinator:
         limit: 1
 ```
 
-Every dbt-related asset gets tagged:
+Every dbt-related asset was tagged:
 
 ```python
 @asset(
@@ -213,7 +224,9 @@ def build_daily_sales_models(context):
     # dbt operations here
 ```
 
-Dagster ensures only one DuckDB write operation runs at a time.
+Dagster ensured only one DuckDB write operation ran at a time.
+
+**Since May 2026: plain jobs that wait.** With Dagster retired, the scheduled jobs are spaced through the day, a task cannot start a second copy of itself, and a job that finds the database locked polls until it is free instead of failing. Reads use a separate read-only query broker that queues behind a write lock and reports who holds it.
 
 ## DuckDB-Specific SQL Patterns
 
@@ -269,4 +282,4 @@ FROM customer_summary
 - [[duckdb]] - Why DuckDB was the right choice (the story)
 - [[dbt]] - Transformation architecture and model organisation
 - [[challenges#Challenge 1 DuckDB Concurrency in Orchestration|Concurrency challenge]] - More on the single-process limitation
-- [[challenges#Challenge 3 Corporate Network Restrictions|Network restrictions]] - Why we can't use external packages
+- [[challenges#Challenge 3 Corporate Network Restrictions|Network restrictions]] - Why packages were off-limits until 2026

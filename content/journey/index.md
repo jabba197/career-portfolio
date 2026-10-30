@@ -1,6 +1,8 @@
 ---
 title: "The Journey"
 description: "How this platform evolved from constraint to solution"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Overview

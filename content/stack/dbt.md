@@ -1,6 +1,8 @@
 ---
 title: "dbt"
 description: "SQL transformations with medallion architecture"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## What dbt Brings
@@ -8,7 +10,7 @@ description: "SQL transformations with medallion architecture"
 dbt (data build tool) is the transformation layer of the MDS. It turns raw data into analytics-ready datasets through version-controlled SQL.
 
 > [!success] Impact
-> 100+ models across 4 markets, all version-controlled and testable. What was once scattered SQL files and tribal knowledge is now a documented, maintainable codebase that any analyst can contribute to.
+> About 500 models across 4 markets (October 2026), all version-controlled and tested. In 2025 it was 100+. What was once scattered SQL files and tribal knowledge is now a documented, maintainable codebase that any analyst can contribute to.
 
 **Why dbt matters:**
 - **Version control** - Every transformation is tracked in Git
@@ -25,25 +27,31 @@ Models are organised in layers, each with a clear purpose:
 
 ```
 dbt/models/
-├── a_staging/           # Bronze: Raw → Standardised
-│   ├── azure/           # Data from Azure Blob
-│   ├── oracle/          # Data from Oracle
+├── a_staging/           # Bronze: Raw → Standardised (~160 models)
+│   ├── oracle_uk/       # One folder per source system, source first
+│   │   └── refined/     # Curated, typed tables (see below)
+│   ├── oracle_de/
+│   ├── data_lake_qi/    # The Azure data lake
+│   ├── synapse/
+│   ├── sap_jp/
+│   ├── sas_it/
 │   └── business_created/# Manual reference data
 │
-├── b_intermediate/      # Silver: Standardised → Business Logic
+├── b_intermediate/      # Silver: Standardised → Business Logic (~210 models)
+│   ├── orders/
 │   ├── products/        # Cross-market product data
 │   ├── customers/       # Segmentation, cohorts
 │   └── legacy/          # Market-specific transforms
-│       ├── uk/
-│       ├── de/
-│       ├── it/
-│       └── jp/
 │
-└── c_marts/             # Gold: Business Logic → Final Datasets
+└── c_marts/             # Gold: Business Logic → Final Datasets (125 models)
     ├── commercial/      # Sales, brand analysis
-    ├── operational/     # Warehouse metrics
-    └── shared/          # Cross-team reports
+    ├── customers/
+    ├── operations/
+    ├── scorecards/      # Weekly and monthly scorecards
+    └── tableau_reporting/
 ```
+
+In 2025 the staging folders were grouped by how data arrived (`azure/`, `oracle/`). I renamed them after the system the data comes from, because a pipeline or a person is not a source.
 
 ### Staging (a_staging)
 
@@ -53,6 +61,8 @@ dbt/models/
 - Cast data types explicitly
 - Add market identifier
 - No business logic - just cleaning
+
+**Refined staging (`stg_ref_*`)** came later. A staging view is cheap to build but re-reads every Parquet file each time it is queried. For the busiest sources I added a second layer: a persisted table with a curated column subset, usually floored to a start date. It is slower to build and fast to query. The two layers are a deliberate contract, and analysis queries go to the refined tables, not the views.
 
 ```sql
 -- stg_uk_orders.sql
@@ -175,6 +185,14 @@ Tests run after models build. Failures alert us to data quality issues before th
 - `accepted_values` - Enums match expected values
 - `relationships` - Foreign keys exist in parent table
 
+### Test packages (2026)
+
+For a long time the project used no dbt packages, because the corporate proxy blocked the package hub. In August 2026 I wrote a small installer that works with the proxy's certificates without turning verification off, and added `dbt_expectations` and `dbt_utils` for their tests. I still use DuckDB's own SQL for anything that generates SQL.
+
+- **Generic tests first.** A generic test sits in the YAML next to the column it guards, so it cannot drift away from it. Composite grains use `dbt_utils.unique_combination_of_columns`; ranges, freshness, volume floors and gap checks use `dbt_expectations`.
+- **Singular tests for business logic only.** About 50 bespoke tests check things a generic test cannot, such as currency conversion being neutral in year-on-year comparisons.
+- **Severity has a meaning.** `error` means the data is wrong; `warn` means it is late or unusual. Thresholds are tuned against history so that none fire on good data, because noisy tests get ignored.
+
 ## Documentation
 
 Every model and column can be documented inline:
@@ -198,6 +216,8 @@ dbt docs serve
 ```
 
 This creates a browsable site with lineage graphs, column descriptions, and test results.
+
+**Documentation is part of the build.** A model change is not finished until its description, grain and grain test are updated in the same commit. Published marts also carry a header that says where they publish. Shared columns, such as market and customer number, use one docs block instead of a description retyped in every model.
 
 ## Multi-Market Support
 
@@ -252,12 +272,14 @@ dbt test
 dbt docs generate && dbt docs serve
 ```
 
-In the MDS, dbt runs are orchestrated by [[dagster|Dagster]], not manually.
+In the MDS, every build goes through a small wrapper script rather than bare `dbt`. The wrapper records each run to a local run-history database: who ran it, the selection, per-model timing and status. That makes "which model got slow?" a query. Scheduled builds are started by the daily Python jobs (by [[dagster|Dagster]] until May 2026).
+
+Before a build that touches more than a few models, I check whether upstream tables were already refreshed today and build only what changed. A careless `+model` selector rebuilds every expensive upstream table too, and on one desktop that competes with everything else.
 
 ## Related
 
 - [[dbt-duckdb]] — Technical reference for dbt on DuckDB
 - [[duckdb]] — Why DuckDB is the foundation
-- [[dagster]] — How dbt runs are orchestrated
+- [[dagster]] — How dbt runs were orchestrated until May 2026, and what replaced it
 - [[stack/index|The Stack]] — Where dbt fits in the overall system
 - [[case-studies#Case Study 4 Customer Segmentation Rebuild|Customer Segmentation rebuild]] — dbt replacing manual Python

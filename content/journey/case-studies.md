@@ -1,6 +1,8 @@
 ---
 title: "Case Studies"
 description: "Real-world problems solved"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Case Study 1: Multi-Market Daily Sales Pipeline
@@ -28,7 +30,7 @@ Build an automated end-to-end pipeline that:
 
 **Action:**
 
-Designed a Dagster job that orchestrates the entire flow:
+Designed a Dagster job (2025) that orchestrates the entire flow:
 
 ```python
 daily_sales_flow_job = define_asset_job(
@@ -66,6 +68,8 @@ Each market's data flows through:
 | Error rate | ~2 issues/week | ~1 issue/month |
 | Analyst time freed | - | 20 hours/week |
 
+**2026 update:** when I retired Dagster in May 2026, this flow became a plain Python job with the same steps as numbered phases. Each phase retries, and a failed run resumes from the phase that broke. The steps did not change, which is the point: the business logic lived in dbt and the scripts, not in the orchestrator.
+
 ---
 
 ## Case Study 2: Flag-Based Tableau Exports
@@ -100,7 +104,7 @@ The script (`duckdb_to_tableau_server.py`) handles all complexity:
 4. Publishes to Tableau Server
 5. Creates local backup copies
 
-Dagster assets become simple wrappers:
+Dagster assets became simple wrappers (2025):
 
 ```python
 @asset(
@@ -129,6 +133,8 @@ The script is also testable from the command line—no Dagster required for debu
 | Lines of code per export | ~50 | ~15 |
 | Debugging complexity | High (Dagster context required) | Low (CLI testable) |
 | Total codebase reduction | - | ~400 lines removed |
+
+**The real payoff came later.** When Dagster was retired in May 2026, the export script moved into the new scheduled jobs unchanged. Because all the publishing logic lived in one command-line script, not in the orchestrator, there was nothing to rewrite.
 
 ---
 
@@ -271,6 +277,37 @@ WHERE o.order_date > (SELECT MAX(order_date) - INTERVAL '3 days' FROM {{ this }}
 
 This single model becoming fast and reliable proved the value of the entire MDS approach.
 
+**2026 update:** the model is still the core UK dataset. It is rebuilt every morning in the first dbt step and fully rebuilt once a week, and it is now the default starting point for ad-hoc UK questions about sales, products and customers.
+
+---
+
+## Case Study 5: Catching Reports That Did Not Land
+
+**Situation:**
+
+By 2026 the platform fed weekly and monthly scorecards as well as daily datasets. Two failures kept slipping through. A weekly job could die before its export step, and nobody noticed until someone asked for the file. And a fixed table could be rebuilt correctly while the published dashboard still showed the old snapshot, because rebuilding a table does not refresh a dashboard.
+
+Every job had logs and alerts. The gap was that nothing checked the *outputs*.
+
+**Task:**
+
+Detect a missing or stale deliverable on the same day, without adding a server or a framework.
+
+**Action:**
+
+- **A register of deliverables.** One YAML file lists every scheduled output: what it is, how often it is due, which job and phase produce it, and a grace window.
+- **A ledger.** The phase that produces an output records it in the run-history database when it lands. Adding a new deliverable is one register entry plus one line in the phase.
+- **A daily gate.** A small job compares the register with the ledger every afternoon. Anything missing past its grace window, or landed but empty, raises an alert to phone and Teams. A missed week keeps alerting until it is fixed.
+- **A stale-datasource check.** The same gate compares each published datasource's last publish with its table's last successful build. If the table is newer, the dashboard is showing old numbers.
+
+The gate reads only the small run-history database, never the main DuckDB file, so it runs in seconds and can never block a build.
+
+**Impact:**
+
+- A job that fails silently is now caught the same day or the next, not when a stakeholder asks.
+- "Did the report go out?" is a query, not a question for me.
+- The design is the asset idea from Dagster - think in outputs, not jobs - without the server.
+
 ---
 
 ## Themes Across Case Studies
@@ -279,3 +316,4 @@ This single model becoming fast and reliable proved the value of the entire MDS 
 2. **Configuration > code** - The less code per use case, the fewer bugs and easier maintenance
 3. **Resilience matters** - Real-world data is messy; build for the messiness
 4. **Show value early** - The customer segmentation rebuild proved the concept before scaling
+5. **Check outputs, not jobs** - A job that ran is not the same as a report that landed

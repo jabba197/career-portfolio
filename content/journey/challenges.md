@@ -1,6 +1,8 @@
 ---
 title: "Challenges"
 description: "Problems solved and lessons learned"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 Technical obstacles encountered while building the MDS, and how I solved them. For business impact metrics, see [[case-studies|Case Studies]].
@@ -13,7 +15,7 @@ Technical obstacles encountered while building the MDS, and how I solved them. F
 
 DuckDB is a single-process database. When Dagster tried to run multiple DBT jobs concurrently, they competed for locks on the same DuckDB file, causing failures and data corruption risks.
 
-**Solution:**
+**Solution (2025):**
 
 Implemented tag-based concurrency limits in Dagster's configuration:
 
@@ -40,6 +42,8 @@ def build_daily_sales_models(context):
 
 Understanding your database's concurrency model is crucial when designing orchestration. DuckDB's single-writer limitation isn't a bug—it's a design choice for simplicity. The solution is to embrace it at the orchestration layer, not fight it.
 
+**2026 update:** I retired Dagster in May 2026 (see [[dagster#Why I Retired It|why]]), and the single-writer rule moved into the jobs themselves. Jobs are spaced through the day, a task cannot start a second copy of itself, and a job that finds the database locked waits for it to free up. Reads were the remaining problem: an ad-hoc query that hit a write lock would hang. I built a small read-only query broker that queues, waits through locks, names the process holding the lock and times out cleanly. The rule for people and AI agents alike: on a lock, wait; never kill the holder, because it may be a two-hour build.
+
 ---
 
 ## Challenge 2: Cross-Market Customer Identity
@@ -62,7 +66,7 @@ FROM orders
 GROUP BY market, member_no
 ```
 
-Added DBT tests to catch violations:
+Added DBT tests to catch violations (2025 version; see below for today's):
 
 ```yaml
 # schema.yml
@@ -74,6 +78,8 @@ models:
 ```
 
 Documented the pattern prominently in CLAUDE.md so AI assistants and new developers don't make the same mistake.
+
+Once test packages were available (2026), the concatenated-string test became `dbt_utils.unique_combination_of_columns` on `[market, member_no, order_no]`, which states the grain directly and cannot be fooled by a separator inside a value.
 
 **Lesson Learned:**
 
@@ -109,6 +115,8 @@ Created internal documentation mapping common dbt_utils functions to DuckDB equi
 **Lesson Learned:**
 
 Constraints breed creativity. By not having access to packages, I learned DuckDB's native capabilities deeply. The resulting code is actually simpler and has no external dependencies to manage.
+
+**2026 update:** I eventually found the root cause. The proxy re-signs TLS traffic, and newer Python versions apply stricter certificate checks, so two problems were stacked on top of each other. A small installer now handles both without switching certificate verification off, and the project uses `dbt_expectations` and `dbt_utils` for tests. Model SQL still uses DuckDB's native functions. The same certificate work was needed again when DuckDB 2.0 arrived in October 2026.
 
 ---
 
@@ -219,6 +227,15 @@ state = {
 
 Grassroots projects can't wait for enterprise infrastructure. Build resilience into the design from day one, even with limited resources. Document everything so anyone can take over.
 
+**2026 update:** it is still one desktop, now a 64 GB machine, but far less of a black box:
+
+- **A run-history database** records every dbt build, with per-model timing, so "slow" and "stuck" can be told apart against a 30-day baseline.
+- **A freshness gate** flags stale source feeds, and **a deliverables gate** flags any scheduled output that did not land.
+- **Alerts go to phone and Teams**, and an AI step writes a post-mortem and a triage note for each failed phase. It can propose a fix, but never commits it; I review it.
+- **The schedule lives in one manifest file**, so standing it up on a replacement machine is one command.
+- **The database is backed up** to the network share after the morning run.
+- **The knowledge is written down**: over 100 pages of design notes, rules and decisions live in the repo, so the system does not depend on what is in my head.
+
 ---
 
 ## Challenge 7: Network vs Local Build Strategy
@@ -261,6 +278,27 @@ Subsequent intermediate and mart models reference `stg_orders` — which now liv
 
 DuckDB's local-first design isn't a limitation to work around — it's a feature to embrace. Rather than fighting the architecture (building on network), work with it: keep the database local, materialise large source tables once, and let DuckDB do what it's good at.
 
+**2026 update:** option 2 came back. In July 2026 the network share began failing on file operations such as rename and delete, while bulk copies still worked, and the morning job kept failing on it. The source Parquet files moved to local disk, and the share became a best-effort mirror that can never fail a job. The materialisation trick also grew into a proper layer: persisted "refined" staging tables for the busiest sources, which analysis queries use instead of the views. See [[parquet-lake#Local-First Storage (2026)|Local-First Storage]].
+
+---
+
+## Challenge 8: Keeping One Machine Alive
+
+**Problem:**
+
+In mid-2026 the host shut down unexpectedly five times in under a month, with no crash dump. That pattern points to memory exhaustion, not a driver fault. A greedy query plan could use up the RAM and take the operating system with it, along with any build that was running.
+
+**Solution:**
+
+- **Headroom, not a tight cap.** dbt runs with a memory limit of 45 GB on the 64 GB box. DuckDB's limit only governs its buffer manager, so the process overshoots it; the remaining headroom keeps Windows alive. A very low limit is just as bad, because it forces heavy disk spill.
+- **Size every query for the box.** No distinct counts or medians in a GROUP BY over 100M+ rows; aggregate in stages instead. Never join two very large tables twice in one query.
+- **Query tables, not views.** Views over Parquet re-read every file each time.
+- **Check free memory first,** and run one heavy job at a time.
+
+**Lesson Learned:**
+
+A bigger machine moves the limit; it does not remove it. On a single desktop, query design is capacity planning. See [[duckdb#DuckDB in 2026|DuckDB in 2026]].
+
 ---
 
 ## Themes Across Challenges
@@ -271,3 +309,4 @@ Looking back, these challenges share common patterns:
 2. **Defensive coding matters** - Production systems fail; the question is whether they recover gracefully
 3. **Documentation is code** - CLAUDE.md and inline comments prevented recurring mistakes
 4. **Test your assumptions** - Customer IDs, CSV formats, concurrency—all seemed obvious until they weren't
+5. **Silent failures are the dangerous ones** - Stale data that passes every test does more harm than a loud crash

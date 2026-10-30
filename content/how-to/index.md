@@ -1,6 +1,8 @@
 ---
 title: "How-To Guides"
 description: "Practical patterns and solutions for common data problems"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## What This Is
@@ -35,7 +37,7 @@ Each guide follows a simple format:
 
 ## A Note on Tool Choices
 
-I use Python, dbt, and DuckDB because they solved my specific constraints (no cloud access, 16GB laptop, read-only Oracle). Your constraints might be different.
+I use Python, dbt, and DuckDB because they solved my specific constraints (no cloud access, a 16GB laptop at the start, read-only Oracle). The platform now runs on a 64 GB desktop, but the guides still assume the laptop you have been issued. Your constraints might be different.
 
 Where possible, I'll note alternatives:
 - If you're using **R**, DuckDB has an R package

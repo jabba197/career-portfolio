@@ -1,6 +1,8 @@
 ---
 title: "Building a Transformation Layer"
 description: "How to structure your data transformations so you're not starting from scratch every time"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## The Problem
@@ -224,6 +226,8 @@ But if you're:
 ## What I Use
 
 I use [[dbt|dbt]] with [[duckdb|DuckDB]] for my transformation layer. dbt handles the structure (staging → intermediate → marts), the dependencies, and the testing. DuckDB handles the actual query execution.
+
+By October 2026 the MDS has about 500 models. What keeps that many maintainable is not the tool but a few written rules: extend an existing model before adding a new one, document a model's grain and test it in the same change, and keep each business rule in one shared definition rather than retyped in every query.
 
 This isn't the only option. The concepts here apply regardless of tool:
 - **dbt + any database** — The standard for modern analytics engineering

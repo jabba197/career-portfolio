@@ -1,6 +1,8 @@
 ---
 title: "Working with Large Data on Local Hardware"
 description: "How to handle datasets that push against your laptop's RAM limits without cloud infrastructure"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## The Problem
@@ -268,6 +270,28 @@ Weekly Summary (100MB)
 ```
 
 Each stage is a checkpoint. If something goes wrong at the aggregation step, you don't re-run the extraction. See [[transformation-layer|Building a Transformation Layer]] for how to structure this.
+
+### 5. Watch the Expensive Aggregates
+
+More RAM does not make this go away. The MDS moved from a 16GB laptop to a 64 GB desktop, and a badly shaped query could still take the whole machine down. The usual culprit is a distinct count or a median inside a GROUP BY over hundreds of millions of rows: the engine has to keep a set of values for every group.
+
+The fix is the same staging idea, applied inside one query. Aggregate in steps with plain sums and counts, for example line → order → customer → month. After the order step there is one row per order, so a plain `COUNT(*)` at the next step is the distinct count.
+
+```sql
+-- Heavy: a hash set per customer over every order line
+SELECT customer_id, COUNT(DISTINCT order_id) AS orders
+FROM order_lines GROUP BY customer_id;
+
+-- Light: collapse to orders first, then count rows
+WITH orders AS (
+    SELECT customer_id, order_id
+    FROM order_lines GROUP BY customer_id, order_id
+)
+SELECT customer_id, COUNT(*) AS orders
+FROM orders GROUP BY customer_id;
+```
+
+Also leave memory for the operating system. If you set DuckDB's `memory_limit`, set it well below physical RAM, because the process uses more than the limit; but not so low that every query spills to disk.
 
 ## Quick Reference
 

@@ -3,11 +3,13 @@ title: "Sources"
 description: "Where QVC's data comes from"
 date: 2025-11-28
 draft: false
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Overview
 
-The MDS pulls data from four source systems. Consolidating them into a single queryable database means analysts no longer need to context-switch between tools, wait for slow Oracle queries, or manually reconcile data across markets.
+The MDS pulls data from four main source systems (plus a handful of smaller feeds, such as an internal broadcast-planning API). Consolidating them into a single queryable database means analysts no longer need to context-switch between tools, wait for slow Oracle queries, or manually reconcile data across markets.
 
 ---
 
@@ -49,8 +51,11 @@ Operational data from QVC's global data warehouse. Separate from the QI Data Lak
 - `orders` — cross-market order data
 - `ship` — shipping/fulfilment
 - `qi_merch` — merchandising dimension table
+- Web analytics — site visits and digital marketing data, extracted every morning (2026)
 
 **Connection:** ODBC with Windows SSO (ActiveDirectoryIntegrated). Partitioned by year/month for large tables.
+
+**Writing back (2026):** some work now runs the other way. A second, separate dbt project builds tables inside Synapse itself, and some results from the desktop are loaded there, so they sit where other teams already work. Permissions there are tighter (table builds only, no views or merges), and the pool stops statements after about an hour, so long scans are split into chunks.
 
 ---
 
@@ -59,7 +64,7 @@ Operational data from QVC's global data warehouse. Separate from the QI Data Lak
 Business-managed files. Excel spreadsheets and CSVs maintained by commercial teams.
 
 **Examples:**
-- **TSV Plans** — Today's Special Value schedules. TSV drives 40-60% of daily sales, so this data is critical.
+- **TSV Plans** — Today's Special Value schedules. It is one of the most important daily inputs. Since 2026 the plan is also pulled daily from an internal broadcast-planning API, not only from spreadsheets.
 - **Budgets** — Market-level sales targets
 - **Exchange rates** — Currency conversion factors
 

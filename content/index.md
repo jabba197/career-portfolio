@@ -1,6 +1,8 @@
 ---
 title: "QVC Modern Data Stack"
 description: "How I built a modern analytics platform that cut pipeline runtime from a day to 20 minutes"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Overview
@@ -18,7 +20,7 @@ The broader stack looked like this:
 - **Oracle** — the transactional source database, not designed for analytical workloads
 - **Hyperion** — a deprecated OLAP layer scheduling extracts to network drives
 - **Excel + Power Query** — the analytics platform. Analysts connected to Oracle via ODBC, transformed in Power Query, and built pivots. Business logic lived inside spreadsheets
-- **16GB laptops** — where it all ran, often from home over 7 Mbps VPN connections
+- **16GB laptops** — where it all ran, often from home over 7 Mbps VPN connections (the platform now runs on a 64 GB desktop)
 
 It worked. People delivered insights, built dashboards, ran the business. But no one was bridging the gap between analyst work and modern engineering practices — multiple analysts were creating different versions of similar reports, nothing was version-controlled, and there was no path to scale.
 
@@ -30,10 +32,10 @@ The full story is in [[journey/index|The Journey]].
 
 ### What I Built
 
-A modern analytics platform that consolidates data from Oracle, Azure Blob Storage, and SharePoint into a unified, version-controlled data warehouse powered by DuckDB and dbt.
+A modern analytics platform that consolidates data from Oracle, Azure Blob Storage, Azure Synapse and SharePoint into a unified, version-controlled data warehouse powered by DuckDB and dbt. Plain Python jobs on the Windows scheduler run it every day, and data tests and delivery checks catch problems before a report goes out.
 
 > [!success] Impact
-> **Pipeline runtime: 1 day → 20 minutes.** What used to crash my laptop now runs reliably every morning. 100+ dbt models serve 4 international markets (UK, DE, IT, JP), enabling ~50 stakeholders across the business to self-serve analytics through Tableau.
+> **Pipeline runtime: 1 day → 20 minutes.** What used to crash my laptop now runs reliably every morning. About 500 dbt models (125 of them published reporting tables) serve 4 international markets (UK, DE, IT, JP), and stakeholders across the business self-serve through Tableau.
 
 ### How People Use It
 
@@ -51,6 +53,7 @@ flowchart LR
         Azure[Azure Blob]
         Oracle[(Oracle)]
         SharePoint[SharePoint]
+        Synapse[(Azure Synapse)]
     end
 
     subgraph Ingestion
@@ -71,25 +74,29 @@ flowchart LR
     end
 
     subgraph Orchestrate
-        Dagster{Dagster}
+        Jobs{Python jobs +<br/>Task Scheduler}
+        Checks[Run history,<br/>freshness and<br/>delivery checks]
     end
 
     Azure --> Python
     Oracle --> Python
     SharePoint --> Python
+    Synapse --> Python
     Python --> Parquet
     Parquet --> DuckDB
     DuckDB --> DBT
     DBT --> Tableau
-    Dagster -.-> Python
-    Dagster -.-> DBT
-    Dagster -.-> Tableau
+    Jobs -.-> Python
+    Jobs -.-> DBT
+    Jobs -.-> Tableau
+    Jobs -.-> Checks
 ```
 
 **Sources:**
 - **Oracle** — Legacy transactional database. Sales, inventory, customer data. Slow to query directly for large datasets.
 - **Azure Blob** — Files dumped by data engineering. CSVs, Excel exports, and the [[parquet-lake|Parquet Lake]].
 - **SharePoint** — Business-managed spreadsheets. Pricing, promotions, manual overrides.
+- **Azure Synapse** — The group's cloud warehouse. Some feeds, such as web browsing data, are extracted from it on a schedule.
 
 ---
 
@@ -104,7 +111,7 @@ Technologies powering the platform. [[stack/index|Browse all →]]
 | [[duckdb\|DuckDB]] | A constraint-driven database choice that enabled everything |
 | [[dbt\|dbt]] | Transformation layer (medallion architecture) |
 | [[dbt-duckdb\|dbt-duckdb]] | Technical patterns and SQL reference |
-| [[dagster\|Dagster]] | Orchestration and scheduling |
+| [[dagster\|Dagster]] | Orchestration and scheduling (2025; retired May 2026 for plain Python jobs) |
 | [[python-pipelines\|Python Pipelines]] | Ingestion from Azure, Oracle, SharePoint |
 | [[tableau\|Tableau]] | Enabling self-serve analytics for the business |
 
@@ -130,7 +137,7 @@ Practical patterns for common data problems. [[how-to/index|Browse all →]]
 |-------|-------------------|
 | [[hyper-api\|Automating Tableau Extracts]] | Publish data to Tableau Server without opening Desktop |
 | [[transformation-layer\|Building a Transformation Layer]] | Structure transformations so you're not starting from scratch |
-| [[local-large-data\|Working with Large Data Locally]] | Handle datasets that push against your laptop's RAM limits |
+| [[local-large-data\|Working with Large Data Locally]] | Handle datasets that push against your machine's RAM limits |
 
 *These guides share what I've learned. They're based on Python/dbt, but the concepts often transfer to other tools.*
 

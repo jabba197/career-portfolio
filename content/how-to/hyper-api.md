@@ -1,6 +1,8 @@
 ---
 title: "Automating Tableau Extracts with the Hyper API"
 description: "How to publish data to Tableau Server without opening Tableau Desktop"
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## The Problem
@@ -225,7 +227,12 @@ Once you have a working script, you can automate it:
 | **Python scheduler (schedule, APScheduler)** | More control, still simple |
 | **Dagster/Prefect/Airflow** | Complex pipelines with dependencies |
 
-In the MDS, we use [[dagster|Dagster]] to orchestrate Tableau exports as part of a larger pipeline — the dbt models run first, then the exports trigger automatically.
+In the MDS, Tableau exports run as phases inside scheduled Python jobs on Windows Task Scheduler — the dbt models build first, then the exports run automatically. From 2025 to May 2026 [[dagster|Dagster]] did this job; I retired it because a plain job with retries, resume and alerts was enough on a single machine.
+
+Two lessons from running this daily:
+
+- **Large uploads need retries per chunk.** The Tableau Server client sends big files in chunks but does not retry a failed one, so one dropped connection restarts the whole upload. If your extracts run to gigabytes over a slow link, retry the failed chunk instead of the whole file.
+- **Check the output, not just the exit code.** A script that exits cleanly can still publish last week's data. A small daily check that compares "what should have been published" with "what was" catches that.
 
 ## Results
 
@@ -249,7 +256,7 @@ If you're in an environment where you can't run Python scripts, this won't work.
 ## Related
 
 - [[tableau|Tableau in the MDS]] — How this fits into the broader architecture
-- [[dagster|Dagster]] — How we orchestrate these exports
+- [[dagster|Dagster]] — How we orchestrated these exports until May 2026, and what replaced it
 - [[challenges|Challenges]] — Problems we solved along the way
 
 ## Further Reading

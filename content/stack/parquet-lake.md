@@ -3,11 +3,13 @@ title: "Parquet Lake"
 description: "A local data layer extending the existing data lake"
 date: 2025-11-28
 draft: false
+created: 2025-11-30
+modified: 2026-10-30
 ---
 
 ## Overview
 
-The Parquet Lake is a local data store on the network drive that serves two purposes: a mirror of the QI Data Lake (converted from CSV to Parquet) and a staging area for Oracle extracts.
+The Parquet Lake is a local data store that serves two purposes: a mirror of the QI Data Lake (converted from CSV to Parquet) and a staging area for Oracle extracts. It started on the network drive; since July 2026 it lives on the machine's local disk, and the network drive holds a mirror copy (see [[#Local-First Storage (2026)]]).
 
 > [!success] Impact
 > Queries that timed out against Azure now complete in seconds. Files are 5-10x smaller than the original CSVs, making single-machine analytics viable.
@@ -48,6 +50,8 @@ I built a Parquet Lake on the local network drive. The approach:
 
 **Why local?** Network drives are on the local network — much faster than going over the internet to Azure. Queries that timed out against Azure complete in seconds locally.
 
+The Azure pulls now sign in with the user's own corporate identity instead of a shared access token, so there is no long-lived secret to rotate or leak.
+
 **Why Parquet?**
 
 | Aspect | CSV | Parquet |
@@ -58,6 +62,21 @@ I built a Parquet Lake on the local network drive. The approach:
 | Compression | None | Built-in |
 
 The size difference matters. You don't need a Spark cluster to query Parquet files — DuckDB handles them on a single machine. Parquet is an industry-standard format; every modern tool reads it.
+
+---
+
+## Local-First Storage (2026)
+
+In July 2026 the network share started failing in an odd way. Bulk reads and writes still worked, but file operations such as rename, delete and directory listing failed at random. The pipeline wrote files to a temporary name and then renamed them, so the morning job kept failing on the rename.
+
+I changed the rule: **write locally, mirror to the share afterwards, and never let the share block a job.**
+
+- Local disk is the source of truth for the Parquet files, the DuckDB database and the Tableau extracts.
+- A small mirror helper copies each finished file to the share. It copies data only, writes straight to the final name (no rename), has a timeout, and never raises an error.
+- Phases whose only job is the network copy are optional: a failure is a warning, not a failed run.
+- One switch pauses mirroring altogether without stopping the extracts.
+
+**The lesson that bit hardest:** for three days the extracts wrote to one location and dbt read from another. Every build passed, every test passed, every report published, all on data frozen at the day of the split. No error anywhere. The write path and the read path are now documented as one rule: if you move one, move the other.
 
 ---
 
