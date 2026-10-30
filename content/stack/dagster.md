@@ -1,7 +1,10 @@
 ---
 title: "Dagster"
-description: "Asset-based data pipelines and scheduling"
+description: "Asset-based data pipelines and scheduling - and why I retired it in May 2026"
 ---
+
+> [!note] Retired in May 2026
+> Dagster ran this platform from 2025 until May 2026. I then replaced it with plain Python jobs on the Windows scheduler. This page keeps the original write-up, because the ideas still shape how the pipeline works. Skip to [[#Why I Retired It]] for what changed and why.
 
 ## Why Orchestration Matters
 
@@ -258,9 +261,9 @@ retry_policy=RetryPolicy(max_retries=5, delay=60, backoff=Backoff.EXPONENTIAL)
 
 Transient failures (network blips, temporary locks) resolve themselves. Persistent failures surface in the UI for investigation.
 
-## What This Enables
+## What This Enabled
 
-With Dagster in place:
+With Dagster in place (2025 - May 2026):
 
 - **Data is fresh by 7:30 AM** — Commercial team has what they need when they arrive
 - **Failures are visible** — The UI shows exactly what failed and why
@@ -269,6 +272,35 @@ With Dagster in place:
 - **History is preserved** — Every run logged, every output tracked
 
 The mental overhead of "is the data ready?" is gone. That's the real value.
+
+## Why I Retired It
+
+**May 2026.** Dagster did its job: it got me from "hope it worked" to visible, logged, retried runs. But on a single Windows desktop the cost kept rising.
+
+- **Memory.** The platform's transformation runs need most of the machine's RAM. A long-running orchestration server beside them added memory pressure on a box that was already the limit, and out-of-memory failures followed.
+- **Windows and no admin rights.** The Dagster daemon is not supported on Windows, and running it as a proper service needs admin rights I did not have. It lived in a command prompt that had to be restarted after every update.
+- **The real gap was not orchestration.** When I reviewed what actually failed, it was rarely "a job did not start". It was "a job ran, but a report did not land, and nobody noticed". That is an observability problem, and it does not need a framework.
+
+When I later re-ran the market scan (Prefect, Airflow, Kestra and others), none of them removed those constraints on this machine. So the answer was to go simpler, not to swap one framework for another.
+
+### What Replaced It
+
+- **Plain Python jobs, one per pipeline,** each split into numbered phases. Every phase retries with a back-off, and a failed run resumes from the phase that broke instead of starting again.
+- **Windows Task Scheduler, driven by one manifest file.** The list of jobs, times and settings lives in version control; a script registers them. Nobody edits schedules by hand in a GUI.
+- **A run-history database.** Every build records who ran it, what it selected, per-model timing and status. "Which model got slow?" and "is it stuck or just slow?" are now queries, with 30-day baselines.
+- **A deliverables check.** A register lists every output that should exist each day or week. A gate compares it with the run history and alerts when something that should have shipped did not. This caught missed weekly reports that had failed silently.
+- **Freshness gates** on the source feeds, so stale inputs are flagged before they reach a report.
+- **Alerts to phone and Teams,** and an AI step that reads a failed phase's log and files a short triage note.
+
+### What Carried Over
+
+The most valuable idea from Dagster survived the tool: **think in outputs, not jobs.** The question is still "is my data current and did the report land?", not "did my script run?". The deliverables check is that asset mindset, without the server.
+
+### What I Learned
+
+- **Fit the tool to the machine.** A framework built for a cluster can be a liability on one desktop.
+- **Find the real failure before buying a fix.** I thought I needed orchestration; I needed visibility.
+- **Retiring a tool is a skill.** Moving off Dagster took a review, a written decision and a plan, not a weekend.
 
 ## Related
 
